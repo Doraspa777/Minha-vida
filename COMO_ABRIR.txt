@@ -1,0 +1,8 @@
+COMO JOGAR NO IPHONE
+
+1. Baixe e descompacte o arquivo.
+2. Abra o arquivo index.html.
+3. Se aparecer a opção Compartilhar, escolha "Abrir no Safari".
+4. O jogo roda sem internet.
+
+O jogo é um protótipo leve e ainda está na primeira versão.

@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Minha Vida — Protótipo</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:#090b10;color:#f5f7fb}
+#app{min-height:100vh;background:#090b10;padding:18px;display:flex;justify-content:center}
+main{width:min(680px,100%)}h1{margin:0;font-size:28px}.sub{color:#9ba3b4;margin:4px 0 18px}
+.card{background:#121620;border:1px solid #252c39;border-radius:18px;padding:16px;margin:12px 0}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stat{background:#0d1118;border-radius:12px;padding:10px}.stat b{display:block;font-size:19px}
+button{width:100%;border:0;border-radius:12px;padding:13px 10px;background:#2563eb;color:white;font-weight:700;font-size:15px;cursor:pointer;margin-top:8px}
+button.secondary{background:#252c39}button:disabled{opacity:.45}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pill{display:inline-block;background:#202735;padding:5px 9px;border-radius:999px;font-size:12px;margin:3px}
+#log{max-height:230px;overflow:auto;line-height:1.45;color:#d8dde8}.event{padding:10px 0;border-bottom:1px solid #252c39}
+.small{font-size:13px;color:#9ba3b4}.big{font-size:22px;font-weight:800}
+</style>
+</head>
+<body>
+<div id="app"><main>
+<h1>Minha Vida 🇧🇷</h1>
+<div class="sub">Protótipo leve de simulação de vida</div>
+
+<section id="setup" class="card">
+<h2>Crie sua vida</h2>
+<label>Nome<br><input id="name" value="Lucas" style="width:100%;padding:12px;border-radius:10px;border:1px solid #343c4b;background:#0d1118;color:white"></label>
+<p>Cidade</p><div class="grid" id="cities"></div>
+<p>Família</p><div class="grid" id="families"></div>
+<button onclick="startGame()">Nascer e começar</button>
+</section>
+
+<section id="game" hidden>
+<div class="card">
+<div class="big" id="title"></div>
+<div id="tags"></div>
+<div class="grid" id="stats"></div>
+</div>
+
+<div class="card" id="actions"></div>
+<div class="card"><h3>📜 História da sua vida</h3><div id="log"></div></div>
+</section>
+</main></div>
+
+<script>
+const cities=["São Paulo","Campinas","Rio de Janeiro","Belo Horizonte","Curitiba","Porto Alegre","Salvador","Recife","Brasília","Fortaleza"];
+const families=["Magnus","Silva","Santos","Oliveira","Almeida","Costa"];
+let S=null;
+const $=id=>document.getElementById(id);
+cities.forEach((c,i)=>{let b=document.createElement("button");b.className="secondary";b.textContent=c;b.onclick=()=>select("city",c,b);$("cities").appendChild(b)});
+families.forEach(f=>{let b=document.createElement("button");b.className="secondary";b.textContent="Família "+f;b.onclick=()=>select("family",f,b);$("families").appendChild(b)});
+function select(k,v,b){S=S||{};S[k]=v;[...b.parentNode.children].forEach(x=>x.style.outline="");b.style.outline="2px solid #60a5fa"}
+function startGame(){
+ const name=$("name").value.trim()||"Lucas";
+ S={name,age:18,city:S?.city||"São Paulo",family:S?.family||"Silva",money:500,health:85,happy:75,intel:60,fame:0,followers:0,football:20,job:"Sem profissão",club:"",alive:true,log:[]};
+ $("setup").hidden=true;$("game").hidden=false;addLog(`Você nasceu na família ${S.family}, em ${S.city}. Aos 18 anos, sua vida adulta começa.`);
+ render();
+}
+function addLog(t){S.log.unshift(`<div class="event"><b>${S.age} anos:</b> ${t}</div>`)}
+function ageUp(){
+ if(!S.alive)return;
+ S.age++;
+ S.health-=Math.floor(Math.random()*5);
+ S.happy+=Math.floor(Math.random()*7)-3;
+ if(S.job==="Influenciador") S.money+=Math.floor(S.followers/1000)*20;
+ if(S.age>=85 || S.health<=0){S.alive=false;addLog(`Sua vida chegou ao fim. Seu legado ficou marcado como <b>família ${S.family}</b>.`)}
+ else {
+  const events=[
+   "Você recebeu uma oportunidade inesperada.",
+   "Um amigo chamou você para uma aventura.",
+   "Uma notícia sobre sua cidade chamou sua atenção.",
+   "Você encontrou alguém que pode mudar seu futuro."
+  ];
+  if(Math.random()<.35)addLog(events[Math.floor(Math.random()*events.length)]);
+ }
+ render();
+}
+function chooseJob(job){
+ S.job=job;
+ if(job==="Influenciador"){addLog("Você começou como influenciador digital. Agora precisa conquistar seguidores.");}
+ else if(job==="Jogador de futebol"){S.football+=10;addLog("Você entrou para uma categoria de base. Seu sonho é virar profissional.");}
+ else {addLog(`Você começou a trabalhar como ${job}.`)}
+ render();
+}
+function social(){
+ if(S.job!=="Influenciador"){addLog("Você tentou criar conteúdo, mas ainda não leva isso como carreira.");S.followers+=50;render();return}
+ const gain=100+Math.floor(Math.random()*1500);
+ S.followers+=gain;S.fame+=Math.max(1,Math.floor(gain/500));S.happy+=2;
+ addLog(`Seu conteúdo viralizou! +${gain.toLocaleString("pt-BR")} seguidores.`);
+ render();
+}
+function match(){
+ if(S.job!=="Jogador de futebol"){addLog("Você foi assistir a uma partida.");render();return}
+ const choices=[
+ ["Chutar de primeira",8],["Tocar para o companheiro",5],["Tentar o drible",7],["Proteger a bola e sofrer a falta",3]
+ ];
+ let text="Escolha sua jogada:<br>";
+ choices.forEach(([n,v])=>text+=`<button onclick="play('${n}',${v})">${n}</button>`);
+ $("actions").innerHTML=text;
+}
+function play(n,v){
+ let success=Math.random() < Math.min(.9,(S.football+v)/100);
+ S.football=Math.min(99,S.football+(success?2:1));
+ S.money+=success?150:40;
+ addLog(success?`Na partida, você escolheu <b>${n}</b> e deu certo! Sua atuação chamou atenção.`:`Você tentou <b>${n}</b>, mas a jogada não saiu como esperado.`);
+ render();
+}
+function render(){
+ $("title").textContent=`${S.name}, ${S.age} anos`;
+ $("tags").innerHTML=`<span class="pill">Família ${S.family}</span><span class="pill">📍 ${S.city}</span><span class="pill">💼 ${S.job}</span>${S.club?`<span class="pill">⚽ ${S.club}</span>`:""}`;
+ $("stats").innerHTML=[
+  ["💰 Dinheiro","R$ "+S.money.toLocaleString("pt-BR")],
+  ["❤️ Saúde",S.health],
+  ["😊 Felicidade",S.happy],
+  ["🧠 Inteligência",S.intel],
+  ["⭐ Fama",S.fame],
+  ["📱 Seguidores",S.followers.toLocaleString("pt-BR")],
+  ["⚽ Futebol",S.football]
+ ].map(x=>`<div class="stat"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
+ let a="";
+ if(S.alive){
+  a+=`<div class="row"><button onclick="ageUp()">⏩ Envelhecer</button><button class="secondary" onclick="social()">📱 Criar conteúdo</button></div>`;
+  a+=`<h3>Escolha uma carreira</h3><div class="row">
+  <button class="secondary" onclick="chooseJob('Influenciador')">📱 Influenciador</button>
+  <button class="secondary" onclick="chooseJob('Jogador de futebol')">⚽ Futebol</button>
+  <button class="secondary" onclick="chooseJob('Empresário')">💼 Empresário</button>
+  <button class="secondary" onclick="chooseJob('Professor')">📚 Professor</button></div>`;
+  a+=`<h3>⚽ Partida</h3><button class="secondary" onclick="match()">Entrar em uma situação de jogo</button>`;
+ } else a=`<div class="big">⚰️ Fim da vida</div><p>Seu sobrenome continua vivo através do seu legado. Próxima versão: continuar como filho/herdeiro.</p>`;
+ $("actions").innerHTML=a;$("log").innerHTML=S.log.join("");
+}
+</script>
+</body></html>
